@@ -1,7 +1,7 @@
 # Encryption Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/lumensistemas/encryption-laravel.svg?style=flat-square)](https://packagist.org/packages/lumensistemas/encryption-laravel)
-[![Tests](https://img.shields.io/github/actions/workflow/status/lumensistemas/encryption-laravel/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/lumensistemas/encryption-laravel/actions/workflows/run-tests.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/lumensistemas/encryption-laravel/package-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/lumensistemas/encryption-laravel/actions/workflows/package-tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/lumensistemas/encryption-laravel.svg?style=flat-square)](https://packagist.org/packages/lumensistemas/encryption-laravel)
 
 Sodium-based encryption, decryption, and blind indexing for Laravel. Provides Eloquent casts for transparent field-level encryption with optional authorization hooks (e.g. LGPD/GDPR compliance).
