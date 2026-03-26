@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update:
@@ -14,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: main
 
@@ -24,9 +25,18 @@ jobs:
           latest-version: ${{ github.event.release.name }}
           release-notes: ${{ github.event.release.body }}
 
-      - name: Commit updated CHANGELOG
-        uses: stefanzweifel/git-auto-commit-action@v7
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v7
         with:
-          branch: main
-          commit_message: Update CHANGELOG
-          file_pattern: CHANGELOG.md
+          branch: changelog/${{ github.event.release.tag_name }}
+          commit-message: Update CHANGELOG for ${{ github.event.release.name }}
+          title: Update CHANGELOG for ${{ github.event.release.name }}
+          body: Auto-generated PR to update CHANGELOG.md after release ${{ github.event.release.name }}.
+          add-paths: CHANGELOG.md
+
+      - name: Auto-merge PR
+        if: steps.create-pr.outputs.pull-request-number
+        run: gh pr merge --auto --squash "${{ steps.create-pr.outputs.pull-request-number }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
