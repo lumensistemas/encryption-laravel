@@ -1,0 +1,76 @@
+{
+    "name": "lumensistemas/encryption-laravel",
+    "description": "Sodium-based encryption, decryption, and blind indexing for Laravel applications.",
+    "keywords": [
+        "lumensistemas",
+        "encryption-laravel",
+        "encryption",
+        "sodium",
+        "blind-indexing",
+        "laravel"
+    ],
+    "homepage": "https://github.com/lumensistemas/encryption-laravel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Lucas Vasconcelos",
+            "email": "lucasvscn@pm.me",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.4",
+        "ext-sodium": "*",
+        "ext-mbstring": "*",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^4.0",
+        "phpstan/phpstan": "^2.1",
+        "rector/rector": "^2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "LumenSistemas\\Encrypt\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LumenSistemas\\Encrypt\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "lint": [
+            "rector process --memory-limit=512M --ansi",
+            "vendor/bin/pint --ansi"
+        ],
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=512M --ansi",
+        "test:lint": [
+            "rector process --clear-cache --dry-run --memory-limit=512M --ansi",
+            "vendor/bin/pint --test --bail --ansi"
+        ],
+        "test": "vendor/bin/pest",
+        "test:coverage": "vendor/bin/pest --coverage --min=90"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "LumenSistemas\\Encrypt\\EncryptionServiceProvider"
+            ],
+            "aliases": {
+                "Encryption": "LumenSistemas\\Encrypt\\Facades\\Encryption"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
