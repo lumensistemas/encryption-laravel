@@ -1,0 +1,123 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '**.php'
+              - '.github/workflows/run-tests.yml'
+              - 'phpunit.xml.dist'
+              - 'phpstan.neon.dist'
+              - 'composer.json'
+
+  lint:
+    needs: changes
+    if: needs.changes.outputs.should-test == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        php: [8.4, 8.5]
+        stability: [prefer-lowest, prefer-stable]
+
+    name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, sodium, fileinfo
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Install dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+
+      - name: Run static analysis
+        if: matrix.stability == 'prefer-stable'
+        run: composer analyse
+
+      - name: Run linting tests
+        run: composer test:lint
+
+  tests:
+    needs: changes
+    if: needs.changes.outputs.should-test == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        php: [8.4, 8.5]
+        stability: [prefer-lowest, prefer-stable]
+
+    name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, sodium, fileinfo
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Install dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+
+      - name: Execute tests
+        run: composer test:coverage
+
+  ci-status:
+    if: always()
+    needs: [changes, lint, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CI status
+        run: |
+          if [[ "${{ needs.lint.result }}" == "failure" || "${{ needs.tests.result }}" == "failure" ]]; then
+            echo "Tests failed"
+            exit 1
+          fi
+          echo "CI passed or was skipped (no source changes)"
