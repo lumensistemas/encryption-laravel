@@ -26,7 +26,7 @@ jobs:
           filters: |
             src:
               - '**.php'
-              - '.github/workflows/run-tests.yml'
+              - '.github/workflows/package-tests.yml'
               - 'phpunit.xml.dist'
               - 'phpstan.neon.dist'
               - 'composer.json'
@@ -43,7 +43,7 @@ jobs:
         php: [8.4, 8.5]
         stability: [prefer-lowest, prefer-stable]
 
-    name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+    name: Lint - P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -84,7 +84,7 @@ jobs:
         php: [8.4, 8.5]
         stability: [prefer-lowest, prefer-stable]
 
-    name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+    name: Tests - P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
     steps:
       - name: Checkout code

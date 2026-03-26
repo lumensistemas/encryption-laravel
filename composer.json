@@ -49,7 +49,7 @@
         "analyse": "vendor/bin/phpstan analyse --memory-limit=512M --ansi",
         "test:lint": [
             "rector process --clear-cache --dry-run --memory-limit=512M --ansi",
-            "vendor/bin/pint --test --bail --ansi"
+            "vendor/bin/pint --test --ansi"
         ],
         "test": "vendor/bin/pest",
         "test:coverage": "vendor/bin/pest --coverage --min=90"
