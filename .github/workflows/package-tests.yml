@@ -34,16 +34,10 @@ jobs:
   lint:
     needs: changes
     if: needs.changes.outputs.should-test == 'true'
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        php: [8.4, 8.5]
-        stability: [prefer-lowest, prefer-stable]
 
-    name: Lint - P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+    name: Lint
 
     steps:
       - name: Checkout code
@@ -52,21 +46,14 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: 8.4
           extensions: mbstring, sodium, fileinfo
           tools: composer:v2
-          coverage: pcov
-
-      - name: Setup problem matchers
-        run: |
-          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
-          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+        run: composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Run static analysis
-        if: matrix.stability == 'prefer-stable'
         run: composer analyse
 
       - name: Run linting tests
