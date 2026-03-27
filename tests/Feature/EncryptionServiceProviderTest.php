@@ -67,6 +67,32 @@ describe('EncryptionServiceProvider', function (): void {
             $this->app->make(Encrypter::class);
         })->throws(RuntimeException::class, 'ENCRYPT_AUTH_KEY_PATH is not set.');
 
+        it('throws RuntimeException when key file is not readable', function (): void {
+            $encPath = sys_get_temp_dir().'/encrypt_test_enc_unreadable.key';
+            $authPath = sys_get_temp_dir().'/encrypt_test_auth_unreadable.key';
+
+            file_put_contents($encPath, random_bytes(SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
+            file_put_contents($authPath, random_bytes(SODIUM_CRYPTO_AUTH_KEYBYTES));
+            chmod($encPath, 0000);
+            chmod($authPath, 0000);
+
+            config([
+                'encryption-laravel.enc_key_path' => $encPath,
+                'encryption-laravel.auth_key_path' => $authPath,
+            ]);
+
+            $this->app->forgetInstance(Encrypter::class);
+
+            try {
+                $this->app->make(Encrypter::class);
+            } finally {
+                chmod($encPath, 0600);
+                chmod($authPath, 0600);
+                @unlink($encPath);
+                @unlink($authPath);
+            }
+        })->throws(RuntimeException::class, 'Key file is not readable')->skipOnWindows();
+
         it('throws RuntimeException when key file does not exist', function (): void {
             config([
                 'encryption-laravel.enc_key_path' => '/nonexistent/encryption.key',

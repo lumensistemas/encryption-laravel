@@ -47,13 +47,17 @@ class GenerateKeysCommand extends Command
             return self::FAILURE;
         }
 
-        if (file_put_contents($encPath, Encrypter::generateEncryptionKey()->get(), LOCK_EX) === false) {
+        try {
+            file_put_contents($encPath, Encrypter::generateEncryptionKey()->get(), LOCK_EX);
+        } catch (\Throwable) {
             $this->components->error(sprintf('Failed to write encryption key file: %s', $encPath));
 
             return self::FAILURE;
         }
 
-        if (file_put_contents($authPath, Encrypter::generateAuthenticationKey()->get(), LOCK_EX) === false) {
+        try {
+            file_put_contents($authPath, Encrypter::generateAuthenticationKey()->get(), LOCK_EX);
+        } catch (\Throwable) {
             $this->components->error(sprintf('Failed to write authentication key file: %s', $authPath));
 
             return self::FAILURE;
