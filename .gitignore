@@ -24,6 +24,9 @@ yarn-error.log
 .php_cs.cache
 .php-cs-fixer.cache
 
+# Keys
+*.key
+
 # Misc
 phpunit.xml
 phpstan.neon

@@ -100,6 +100,11 @@ describe('EncryptionServiceProvider', function (): void {
             file_put_contents($encPath, random_bytes(16));
             file_put_contents($authPath, random_bytes(32));
 
+            if (PHP_OS_FAMILY !== 'Windows') {
+                chmod($encPath, 0600);
+                chmod($authPath, 0600);
+            }
+
             config([
                 'encryption-laravel.enc_key_path' => $encPath,
                 'encryption-laravel.auth_key_path' => $authPath,
@@ -108,6 +113,24 @@ describe('EncryptionServiceProvider', function (): void {
             $this->app->forgetInstance(Encrypter::class);
             $this->app->make(Encrypter::class);
         })->throws(RuntimeException::class, 'must contain exactly 32 bytes, got 16');
+
+        it('throws RuntimeException when key file has insecure permissions', function (): void {
+            $encPath = sys_get_temp_dir().'/encrypt_test_enc_perms.key';
+            $authPath = sys_get_temp_dir().'/encrypt_test_auth_perms.key';
+
+            file_put_contents($encPath, random_bytes(SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
+            file_put_contents($authPath, random_bytes(SODIUM_CRYPTO_AUTH_KEYBYTES));
+            chmod($encPath, 0644);
+            chmod($authPath, 0644);
+
+            config([
+                'encryption-laravel.enc_key_path' => $encPath,
+                'encryption-laravel.auth_key_path' => $authPath,
+            ]);
+
+            $this->app->forgetInstance(Encrypter::class);
+            $this->app->make(Encrypter::class);
+        })->throws(RuntimeException::class, 'has insecure permissions')->skipOnWindows();
     });
 
     describe('resolved Encrypter', function (): void {

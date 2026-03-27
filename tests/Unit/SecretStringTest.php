@@ -65,4 +65,14 @@ describe('SecretString', function (): void {
         expect($secret->get())->toBe($value);
         expect((string) $secret)->toBe('*');
     });
+
+    it('throws RuntimeException when unserialized via __unserialize()', function (): void {
+        $secret = new SecretString('secret');
+        $secret->__unserialize([]);
+    })->throws(RuntimeException::class, 'SecretString cannot be deserialized.');
+
+    it('throws RuntimeException when unserialized via __wakeup()', function (): void {
+        $secret = new SecretString('secret');
+        $secret->__wakeup();
+    })->throws(RuntimeException::class, 'SecretString cannot be deserialized.');
 });

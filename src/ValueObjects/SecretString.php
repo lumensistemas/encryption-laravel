@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace LumenSistemas\Encrypt\ValueObjects;
 
+use RuntimeException;
 use SensitiveParameter;
 use Stringable;
 
@@ -57,6 +58,24 @@ final readonly class SecretString implements Stringable
     public function __sleep(): array
     {
         return [];
+    }
+
+    /**
+     * Prevent deserialization of the sensitive string.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function __unserialize(array $data): void
+    {
+        throw new RuntimeException('SecretString cannot be deserialized.');
+    }
+
+    /**
+     * Prevent deserialization of the sensitive string.
+     */
+    public function __wakeup(): void
+    {
+        throw new RuntimeException('SecretString cannot be deserialized.');
     }
 
     /**

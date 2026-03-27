@@ -110,6 +110,12 @@ describe('encryption:generate-keys', function (): void {
         expect(file_get_contents($this->tempDir.'/encryption.key'))->toBe('old');
     });
 
+    it('fails when --path directory does not exist', function (): void {
+        $this->artisan('encryption:generate-keys', ['--path' => '/nonexistent/directory/path'])
+            ->expectsOutputToContain('Directory does not exist')
+            ->assertExitCode(Command::FAILURE);
+    });
+
     it('does not ask for confirmation with --force outside production', function (): void {
         $this->app->detectEnvironment(fn (): string => 'staging');
 

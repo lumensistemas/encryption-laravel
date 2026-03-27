@@ -67,6 +67,19 @@ class EncryptionServiceProvider extends ServiceProvider
             throw new RuntimeException(sprintf('Key file is empty or unreadable: %s (%s).', $configName, $path));
         }
 
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $perms = fileperms($path) & 0777;
+
+            if ($perms !== 0600) {
+                throw new RuntimeException(sprintf(
+                    'Key file %s (%s) has insecure permissions %04o. Expected 0600.',
+                    $configName,
+                    $path,
+                    $perms,
+                ));
+            }
+        }
+
         if (mb_strlen($contents, '8bit') !== $expectedLength) {
             throw new RuntimeException(sprintf(
                 'Key file %s (%s) must contain exactly %d bytes, got %d.',
