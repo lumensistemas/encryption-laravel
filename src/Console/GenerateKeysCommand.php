@@ -21,6 +21,18 @@ class GenerateKeysCommand extends Command
         $directory = is_string($path) ? $path : $this->laravel->storagePath();
         $force = $this->option('force') === true;
 
+        if (! is_dir($directory)) {
+            $this->components->error(sprintf('Directory does not exist: %s', $directory));
+
+            return self::FAILURE;
+        }
+
+        if (! is_writable($directory)) {
+            $this->components->error(sprintf('Directory is not writable: %s', $directory));
+
+            return self::FAILURE;
+        }
+
         $encPath = $directory.'/encryption.key';
         $authPath = $directory.'/authentication.key';
 
@@ -35,8 +47,21 @@ class GenerateKeysCommand extends Command
             return self::FAILURE;
         }
 
-        file_put_contents($encPath, Encrypter::generateEncryptionKey()->get());
-        file_put_contents($authPath, Encrypter::generateAuthenticationKey()->get());
+        try {
+            file_put_contents($encPath, Encrypter::generateEncryptionKey()->get(), LOCK_EX);
+        } catch (\Throwable) {
+            $this->components->error(sprintf('Failed to write encryption key file: %s', $encPath));
+
+            return self::FAILURE;
+        }
+
+        try {
+            file_put_contents($authPath, Encrypter::generateAuthenticationKey()->get(), LOCK_EX);
+        } catch (\Throwable) {
+            $this->components->error(sprintf('Failed to write authentication key file: %s', $authPath));
+
+            return self::FAILURE;
+        }
 
         if (PHP_OS_FAMILY !== 'Windows') {
             chmod($encPath, 0600);

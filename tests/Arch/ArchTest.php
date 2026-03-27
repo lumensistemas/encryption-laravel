@@ -16,10 +16,9 @@ it('source classes use strict types')
     ->expect('LumenSistemas\\Encrypt')
     ->toUseStrictTypes();
 
-it('value objects are final and readonly')
+it('value objects are final')
     ->expect('LumenSistemas\\Encrypt\\ValueObjects')
-    ->toBeFinal()
-    ->toBeReadonly();
+    ->toBeFinal();
 
 it('exceptions extend Exception and have the Exception suffix')
     ->expect('LumenSistemas\\Encrypt\\Exceptions')

@@ -45,6 +45,10 @@ class AsEncryptedString implements CastsAttributes
     /**
      * Register a callback that authorizes and/or audits access before decryption.
      *
+     * Pass null to clear the callback — important for test isolation and
+     * long-running processes (e.g. Laravel Octane) where static state
+     * persists across requests.
+     *
      * @param  null|Closure(Model, string, array<string, mixed>): (true|string)  $callback
      */
     public static function authorizeUsing(?Closure $callback): void

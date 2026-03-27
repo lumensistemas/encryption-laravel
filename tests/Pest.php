@@ -25,6 +25,11 @@ function configureKeyFiles(): array
     file_put_contents($encPath, Encrypter::generateEncryptionKey()->get());
     file_put_contents($authPath, Encrypter::generateAuthenticationKey()->get());
 
+    if (PHP_OS_FAMILY !== 'Windows') {
+        chmod($encPath, 0600);
+        chmod($authPath, 0600);
+    }
+
     config([
         'encryption-laravel.enc_key_path' => $encPath,
         'encryption-laravel.auth_key_path' => $authPath,

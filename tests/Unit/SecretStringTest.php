@@ -65,4 +65,36 @@ describe('SecretString', function (): void {
         expect($secret->get())->toBe($value);
         expect((string) $secret)->toBe('*');
     });
+
+    it('throws RuntimeException when unserialized via __unserialize()', function (): void {
+        $secret = new SecretString('secret');
+        $secret->__unserialize([]);
+    })->throws(RuntimeException::class, 'SecretString cannot be deserialized.');
+
+    it('throws RuntimeException when unserialized via __wakeup()', function (): void {
+        $secret = new SecretString('secret');
+        $secret->__wakeup();
+    })->throws(RuntimeException::class, 'SecretString cannot be deserialized.');
+
+    it('zeroes the value when destroy() is called', function (): void {
+        $secret = new SecretString('secret');
+        $secret->destroy();
+
+        expect(fn (): string => $secret->get())->toThrow(RuntimeException::class, 'SecretString has been destroyed.');
+    });
+
+    it('can safely call destroy() multiple times', function (): void {
+        $secret = new SecretString('secret');
+        $secret->destroy();
+        $secret->destroy();
+
+        expect(fn (): string => $secret->get())->toThrow(RuntimeException::class, 'SecretString has been destroyed.');
+    });
+
+    it('can safely destroy an empty string', function (): void {
+        $secret = new SecretString('');
+        $secret->destroy();
+
+        expect(fn (): string => $secret->get())->toThrow(RuntimeException::class, 'SecretString has been destroyed.');
+    });
 });

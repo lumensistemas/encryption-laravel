@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace LumenSistemas\Encrypt\ValueObjects;
 
+use RuntimeException;
 use SensitiveParameter;
 use Stringable;
+
+use function sodium_memzero;
 
 /**
  * Class SecretString
@@ -19,15 +22,26 @@ use Stringable;
  * accessed only through the get() method.
  *
  * CAVEAT: This class is not secure in the general sense. It only prevents
- * accidental exposure in certain contexts. It is the responsibility of the
- * developer to ensure proper handling of the sensitive data.
+ * accidental exposure in certain contexts. PHP's copy-on-write semantics
+ * mean that sodium_memzero() may not erase every copy of the value, but
+ * it still reduces the exposure window as a defense-in-depth measure.
  */
-final readonly class SecretString implements Stringable
+final class SecretString implements Stringable
 {
+    private bool $destroyed = false;
+
     /**
      * SecretString constructor.
      */
     public function __construct(#[SensitiveParameter] private string $value) {}
+
+    /**
+     * Zero the sensitive value when the object is garbage collected.
+     */
+    public function __destruct()
+    {
+        $this->destroy();
+    }
 
     /**
      * When cast to a string, it will return a placeholder instead of the actual
@@ -60,10 +74,46 @@ final readonly class SecretString implements Stringable
     }
 
     /**
+     * Prevent deserialization of the sensitive string.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function __unserialize(array $data): void
+    {
+        throw new RuntimeException('SecretString cannot be deserialized.');
+    }
+
+    /**
+     * Prevent deserialization of the sensitive string.
+     */
+    public function __wakeup(): void
+    {
+        throw new RuntimeException('SecretString cannot be deserialized.');
+    }
+
+    /**
+     * Zero the sensitive value in memory.
+     */
+    public function destroy(): void
+    {
+        if (! $this->destroyed && $this->value !== '') {
+            $copy = $this->value;
+            $this->value = '';
+            sodium_memzero($copy);
+        }
+
+        $this->destroyed = true;
+    }
+
+    /**
      * Returns the actual value of the sensitive string.
      */
     public function get(): string
     {
+        if ($this->destroyed) {
+            throw new RuntimeException('SecretString has been destroyed.');
+        }
+
         return $this->value;
     }
 }

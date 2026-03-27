@@ -110,6 +110,43 @@ describe('encryption:generate-keys', function (): void {
         expect(file_get_contents($this->tempDir.'/encryption.key'))->toBe('old');
     });
 
+    it('fails when --path directory does not exist', function (): void {
+        $this->artisan('encryption:generate-keys', ['--path' => '/nonexistent/directory/path'])
+            ->expectsOutputToContain('Directory does not exist')
+            ->assertExitCode(Command::FAILURE);
+    });
+
+    it('fails when --path directory is not writable', function (): void {
+        chmod($this->tempDir, 0444);
+
+        $this->artisan('encryption:generate-keys', ['--path' => $this->tempDir])
+            ->expectsOutputToContain('Directory is not writable')
+            ->assertExitCode(Command::FAILURE);
+
+        chmod($this->tempDir, 0755);
+    })->skipOnWindows();
+
+    it('fails when encryption key file cannot be written', function (): void {
+        // Place a directory where the key file would go — file_put_contents will throw
+        mkdir($this->tempDir.'/encryption.key');
+
+        $this->artisan('encryption:generate-keys', ['--path' => $this->tempDir, '--force' => true])
+            ->expectsOutputToContain('Failed to write encryption key file')
+            ->assertExitCode(Command::FAILURE);
+
+        rmdir($this->tempDir.'/encryption.key');
+    });
+
+    it('fails when authentication key file cannot be written', function (): void {
+        mkdir($this->tempDir.'/authentication.key');
+
+        $this->artisan('encryption:generate-keys', ['--path' => $this->tempDir, '--force' => true])
+            ->expectsOutputToContain('Failed to write authentication key file')
+            ->assertExitCode(Command::FAILURE);
+
+        rmdir($this->tempDir.'/authentication.key');
+    });
+
     it('does not ask for confirmation with --force outside production', function (): void {
         $this->app->detectEnvironment(fn (): string => 'staging');
 
