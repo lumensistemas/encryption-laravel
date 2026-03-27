@@ -18,6 +18,7 @@ use function sodium_crypto_auth_verify;
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_keygen;
 use function sodium_crypto_secretbox_open;
+use function sodium_memzero;
 
 class Encrypter
 {
@@ -74,7 +75,12 @@ class Encrypter
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $ciphertext = sodium_crypto_secretbox($input->get(), $nonce, $this->encKey->get());
 
-        return $this->encode($nonce.$ciphertext);
+        try {
+            return $this->encode($nonce.$ciphertext);
+        } finally {
+            sodium_memzero($nonce);
+            sodium_memzero($ciphertext);
+        }
     }
 
     /**
@@ -98,12 +104,18 @@ class Encrypter
         $minLength = SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES;
 
         if (mb_strlen($decoded, '8bit') < $minLength) {
+            sodium_memzero($decoded);
+
             throw new DecryptionException;
         }
 
         $nonce = $this->substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $ciphertext = $this->substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        sodium_memzero($decoded);
+
         $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $this->encKey->get());
+        sodium_memzero($nonce);
+        sodium_memzero($ciphertext);
 
         if ($plaintext === false) {
             throw new DecryptionException;
