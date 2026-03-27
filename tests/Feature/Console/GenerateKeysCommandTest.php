@@ -128,24 +128,24 @@ describe('encryption:generate-keys', function (): void {
 
     it('fails when encryption key file cannot be written', function (): void {
         // Place a directory where the key file would go — file_put_contents will throw
-        mkdir($this->tempDir.'/encryption.key', 0755);
+        mkdir($this->tempDir.'/encryption.key');
 
         $this->artisan('encryption:generate-keys', ['--path' => $this->tempDir, '--force' => true])
             ->expectsOutputToContain('Failed to write encryption key file')
             ->assertExitCode(Command::FAILURE);
 
         rmdir($this->tempDir.'/encryption.key');
-    })->skipOnWindows();
+    });
 
     it('fails when authentication key file cannot be written', function (): void {
-        mkdir($this->tempDir.'/authentication.key', 0755);
+        mkdir($this->tempDir.'/authentication.key');
 
         $this->artisan('encryption:generate-keys', ['--path' => $this->tempDir, '--force' => true])
             ->expectsOutputToContain('Failed to write authentication key file')
             ->assertExitCode(Command::FAILURE);
 
         rmdir($this->tempDir.'/authentication.key');
-    })->skipOnWindows();
+    });
 
     it('does not ask for confirmation with --force outside production', function (): void {
         $this->app->detectEnvironment(fn (): string => 'staging');
