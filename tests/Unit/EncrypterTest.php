@@ -4,6 +4,36 @@ use LumenSistemas\Encrypt\Encrypter;
 use LumenSistemas\Encrypt\Exceptions\DecryptionException;
 use LumenSistemas\Encrypt\ValueObjects\SecretString;
 
+describe('constructor validation', function (): void {
+    it('throws InvalidArgumentException when encryption key is too short', function (): void {
+        new Encrypter(
+            new SecretString(random_bytes(16)),
+            Encrypter::generateAuthenticationKey(),
+        );
+    })->throws(InvalidArgumentException::class, 'Encryption key must be exactly 32 bytes.');
+
+    it('throws InvalidArgumentException when encryption key is too long', function (): void {
+        new Encrypter(
+            new SecretString(random_bytes(64)),
+            Encrypter::generateAuthenticationKey(),
+        );
+    })->throws(InvalidArgumentException::class, 'Encryption key must be exactly 32 bytes.');
+
+    it('throws InvalidArgumentException when authentication key is too short', function (): void {
+        new Encrypter(
+            Encrypter::generateEncryptionKey(),
+            new SecretString(random_bytes(16)),
+        );
+    })->throws(InvalidArgumentException::class, 'Authentication key must be exactly 32 bytes.');
+
+    it('throws InvalidArgumentException when authentication key is too long', function (): void {
+        new Encrypter(
+            Encrypter::generateEncryptionKey(),
+            new SecretString(random_bytes(64)),
+        );
+    })->throws(InvalidArgumentException::class, 'Authentication key must be exactly 32 bytes.');
+});
+
 describe('Encrypter', function (): void {
     beforeEach(function (): void {
         $this->manager = new Encrypter(
@@ -150,6 +180,23 @@ describe('Encrypter', function (): void {
                 expect($e->getMessage())->toBe('Failed to decrypt the input string.');
             }
         });
+
+        it('throws DecryptionException for invalid base64 input', function (): void {
+            $this->manager->decrypt('!!!not-valid-base64!!!');
+        })->throws(DecryptionException::class);
+
+        it('throws DecryptionException for input that is too short', function (): void {
+            $shortData = sodium_bin2base64(
+                random_bytes(10),
+                SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING,
+            );
+
+            $this->manager->decrypt($shortData);
+        })->throws(DecryptionException::class);
+
+        it('throws DecryptionException for empty input', function (): void {
+            $this->manager->decrypt('');
+        })->throws(DecryptionException::class);
     });
 
     describe('hash()', function (): void {
@@ -230,6 +277,14 @@ describe('Encrypter', function (): void {
             );
 
             expect($otherManager->verify($input, $hash))->toBeFalse();
+        });
+
+        it('returns false for invalid base64 hash', function (): void {
+            expect($this->manager->verify(new SecretString('secret'), '!!!not-valid!!!'))->toBeFalse();
+        });
+
+        it('returns false for empty hash', function (): void {
+            expect($this->manager->verify(new SecretString('secret'), ''))->toBeFalse();
         });
     });
 });

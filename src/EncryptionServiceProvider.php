@@ -34,8 +34,8 @@ class EncryptionServiceProvider extends ServiceProvider
             }
 
             return new Encrypter(
-                $this->readKeyFile($encKeyPath, 'ENCRYPT_ENC_KEY_PATH'),
-                $this->readKeyFile($authKeyPath, 'ENCRYPT_AUTH_KEY_PATH'),
+                $this->readKeyFile($encKeyPath, 'ENCRYPT_ENC_KEY_PATH', SODIUM_CRYPTO_SECRETBOX_KEYBYTES),
+                $this->readKeyFile($authKeyPath, 'ENCRYPT_AUTH_KEY_PATH', SODIUM_CRYPTO_AUTH_KEYBYTES),
             );
         });
     }
@@ -51,7 +51,7 @@ class EncryptionServiceProvider extends ServiceProvider
         }
     }
 
-    private function readKeyFile(string $path, string $configName): SecretString
+    private function readKeyFile(string $path, string $configName, int $expectedLength): SecretString
     {
         if (! file_exists($path)) {
             throw new RuntimeException(sprintf('Key file does not exist: %s (%s).', $configName, $path));
@@ -65,6 +65,16 @@ class EncryptionServiceProvider extends ServiceProvider
 
         if ($contents === false || $contents === '') {
             throw new RuntimeException(sprintf('Key file is empty or unreadable: %s (%s).', $configName, $path));
+        }
+
+        if (mb_strlen($contents, '8bit') !== $expectedLength) {
+            throw new RuntimeException(sprintf(
+                'Key file %s (%s) must contain exactly %d bytes, got %d.',
+                $configName,
+                $path,
+                $expectedLength,
+                mb_strlen($contents, '8bit'),
+            ));
         }
 
         return new SecretString($contents);

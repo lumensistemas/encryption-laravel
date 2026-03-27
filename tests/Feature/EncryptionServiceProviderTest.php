@@ -92,6 +92,22 @@ describe('EncryptionServiceProvider', function (): void {
             $this->app->forgetInstance(Encrypter::class);
             $this->app->make(Encrypter::class);
         })->throws(RuntimeException::class, 'Key file is empty or unreadable');
+
+        it('throws RuntimeException when key file has wrong length', function (): void {
+            $encPath = sys_get_temp_dir().'/encrypt_test_enc_badlen.key';
+            $authPath = sys_get_temp_dir().'/encrypt_test_auth_badlen.key';
+
+            file_put_contents($encPath, random_bytes(16));
+            file_put_contents($authPath, random_bytes(32));
+
+            config([
+                'encryption-laravel.enc_key_path' => $encPath,
+                'encryption-laravel.auth_key_path' => $authPath,
+            ]);
+
+            $this->app->forgetInstance(Encrypter::class);
+            $this->app->make(Encrypter::class);
+        })->throws(RuntimeException::class, 'must contain exactly 32 bytes, got 16');
     });
 
     describe('resolved Encrypter', function (): void {
